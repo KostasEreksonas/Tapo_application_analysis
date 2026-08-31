@@ -6,13 +6,14 @@ Table of Contents
 =================
 * [Prerequisites](#prerequisites)
 * [Initial Analysis](#initial-analysis)
-* [Static Analysis](#static-analysis)
-    * [Pulling Application Files](#pulling-application-files)
+* [Pulling Application Files](#pulling-application-files)
+* [Static Analysis of Signature Algorithm](#static-analysis-of-signature-algorithm)
     * [Code Analysis With JADX](#code-analysis-with-jadx)
     * [Signature Algorithm](#signature-algorithm)
-* [Dynamic Analysis](#dynamic-analysis)
+* [Dynamic Analysis of Signature Algorithm](#dynamic-analysis-of-signature-algorithm)
     * [Frida Hook for Intercepting HTTP Request Signatures](#frida-hook-for-intercepting-http-request-signatures)
-* [Python Implementation](#python-implementation)
+* [TermID Algorithm](#termid-algorithm)
+* [Python Implementation of HTTP Request Signature](#python-implementation-of-http-request-signature)
 
 # Prerequisites
 
@@ -77,12 +78,7 @@ During cryptographic data collection (spawning Tapo Android application with the
 ```
 
 The interesting value here is `6ed7d97f3e73467f8a5bab90b577ba4c` - [as per ad1s0n's dev.to article](https://dev.to/ad1s0n/reverse-engineering-tp-link-tapos-rest-api-part-1-4g6), this HMAC secret key is hardcoded into the Tapo application (later this was confirmed by doing static analysis with JADX).
-
-# Static Analysis
-
-For static analysis, the targeted application needs to be pulled the Android device via `adb`.
-
-## Pulling Application Files
+# Pulling Application Files
 
 1. List relevant packages:
 
@@ -110,25 +106,29 @@ adb pull /data/app/~~s-<base64-string>/<package-name>-n_K_-<base64-string>/base.
 
 4. [A shell script that automates package pulling process can be found by following this link](https://github.com/KostasEreksonas/android_analysis/blob/main/scripts/pull_application).
 
+# Static Analysis of Signature Algorithm
+
+For static analysis, the targeted application needs to be pulled the Android device via `adb`.
+
 ## Code Analysis With JADX
 
 1. Load `base.apk` into JADX.
 
 2. Search for the hardcoded HMAC key:
 
-![Hardcoded HMAC key](images/1.png)
+![Hardcoded HMAC key](./images/1.png)
 
 3. Full function with the hardcoded HMAC key:
 
-![Full function with the hardcoded HMAC key](images/2.png)
+![Full function with the hardcoded HMAC key](./images/2.png)
 
 4. Search for `m235933h()` function and select `addInterceptor`:
 
-![Interceptor function](images/3.png)
+![Interceptor function](./images/3.png)
 
 5. Following the `C63377r()` object declaration shows decompiled methods where actual signature building happens:
 
-![Signature building logic](images/4.png)
+![Signature building logic](./images/4.png)
 
 One additional thing to note is that `C63377r(String str, String str2)` takes 2 arguments:
 
@@ -149,7 +149,7 @@ One additional thing to note is that `C63377r(String str, String str2)` takes 2 
 
 On a high level, the signature derivation scheme can look as follows:
 
-![Signature derivation scheme](images/5.png)
+![Signature derivation scheme](./images/5.png)
 
 For example, if the following HTTP request is captured:
 
@@ -176,13 +176,13 @@ Then conceptually, the signature is built in the following way:
 signature = hmac.new(secretKey, str(Content-MD5 + "\n" + Timestamp + "\n" + Nonce + "\n" + "/api/v2/account/getMFAFeatureStatus"), sha1).hexdigest()
 ```
 
-# Dynamic Analysis
+# Dynamic Analysis of Signature Algorithm
 
 Dynamic analysis allows to intercept and analyze relevant methods during Android application's runtime.
 
 ## Frida Hook for Intercepting HTTP Request Signatures
 
-In the Frida hook - available in this repository as [signature/signature.js](./signature/signature.js) - `C63377r` class is renamed to `SignatureInterceptor`, for the purpose of better readability. This hook overloads three methods of SignatureInterceptor class:
+In the Frida hook - available in this repository as [dynamic_analysis/signature.js](./dynamic_analysis/signature.js) - `C63377r` class is renamed to `SignatureInterceptor`, for the purpose of better readability. This hook overloads three methods of SignatureInterceptor class:
 
 1. SignatureInterceptor.$init:
     * Loads `secret key` into a local variable.
@@ -194,16 +194,24 @@ In the Frida hook - available in this repository as [signature/signature.js](./s
     * Takes 4 relevant parameters as input.
     * Computes HmacSHA1 hash as HTTP request signature.
 
-For every captured signature a JSON object is generated with some additional metadata:
+For every captured signature a JSON object is generated with additional metadata, that include:
 
 1. Content type.
 2. Content length.
-3. Content string.
+3. Content string (request body).
 4. Encoded content string.
 5. Timestamp.
 6. Nonce.
 7. API path.
 8. Signature.
+9. Request:
+    * URL.
+    * Request URL parameters.
+10. Response:
+    * Method.
+    * Code.
+    * Message.
+    * Body.
 
 If Frida is installed on the host machine via uv package manager, a sample command that spawns an Android application with signature intercepting hook attached could look like this:
 
@@ -221,17 +229,201 @@ Example output from a successful run:
 
 ```json
 {
-  "contentType": "application/json; charset=utf-8",
-  "contentLength": "2",
-  "contentString": "{}",
-  "contentEncoded": "mZFLkyvTelC5g8XnyQrpOw==",
+  "threadId": "57820",
+  "accessKey": "4d11b6b9d5ea4d19a829adbb9714b057",
+  "secretKey": "6ed7d97f3e73467f8a5bab90b577ba4c",
+  "contentType": "application/json; charset=UTF-8",
+  "contentLength": "134",
+  "contentString": "{\"appPackageName\":\"com.tplink.iot\",\"appType\":\"TP-Link_Tapo_Android\",\"tcspVer\":\"1.1\",\"terminalUUID\":\"55362BA0604DB15DDEF62C41C6D57E46\"}",
+  "contentEncoded": "OipCDENZq7XgQ1RGH/EisA==",
   "timestamp": "9999999999",
-  "nonce": "d78ef6b9-d1cb-4610-8219-589833f0c1f8",
-  "path": "/api/v2/account/getMFAFeatureStatus",
-  "signature": "a7356d83df620ee3fa326151b212883c458e4d33"
+  "nonce": "c76f5bda-f745-4390-99e6-3fdc0aab891a",
+  "path": "/api/v2/common/helloCloud",
+  "signature": "bd61941929ac354d19d4f3a8fe0b3445dddb3d9b",
+  "request": {
+    "method": "POST",
+    "url": "https://n-wap.i.tplinkcloud.com/api/v2/common/helloCloud?appName=TP-Link_Tapo_Android&appVer=3.20.154&netType=wifi&termID=55362BA0604DB15DDEF62C41C6D57E46&ospf=Android%2016&brand=TPLINK&locale=en_US&model=Redmi%20Note%209&termName=Xiaomi%20Redmi%20Note%209&termMeta=1",
+    "urlParameterNames": [
+      {
+        "name": "appName",
+        "value": "TP-Link_Tapo_Android"
+      },
+      {
+        "name": "appVer",
+        "value": "3.20.154"
+      },
+      {
+        "name": "netType",
+        "value": "wifi"
+      },
+      {
+        "name": "termID",
+        "value": "55362BA0604DB15DDEF62C41C6D57E46"
+      },
+      {
+        "name": "ospf",
+        "value": "Android 16"
+      },
+      {
+        "name": "brand",
+        "value": "TPLINK"
+      },
+      {
+        "name": "locale",
+        "value": "en_US"
+      },
+      {
+        "name": "model",
+        "value": "Redmi Note 9"
+      },
+      {
+        "name": "termName",
+        "value": "Xiaomi Redmi Note 9"
+      },
+      {
+        "name": "termMeta",
+        "value": "1"
+      }
+    ],
+    "headers": [
+      {
+        "name": "signature-required",
+        "value": "true"
+      },
+      {
+        "name": "Content-Type",
+        "value": "application/json;charset=UTF-8"
+      }
+    ],
+    "tags": "com.tplink.cloud.api.ProtocolV2Api.helloCloud() [com.tplink.cloud.bean.protocol.params.HelloCloudParams@20dbac0]"
+  },
+  "response": {
+    "protocol": "http/1.1",
+    "code": 200,
+    "message": "OK",
+    "body": "{\"error_code\":0,\"result\":{\"tcspStatus\":1}}"
+  }
 }
 ```
 
-# Python Implementation
+# TermID Algorithm
 
-Python implementation of HTTP request signature building is available in this repository as [signature.py](./signature.py).
+Full Javascript code that logs the process of building a termID [can be accessed by following this link](./dynamic_analysis/termId.js). However, let's contextualize it a bit first.
+
+In JADX-decompiled code, `AbstractC50389m.m181296b()` is the method that computes and returns `termID`:
+
+![Method that build termID, as shown in code decompiled by JADX](./images/6.png)
+
+As the first thing, this method queries `SharedPreferences["term_uuid_pref"]["term_uuid_new"]` for a cached termID value. If a cached value is found, method returns it ***without*** falling back to generation logic. Since the test device already has a termID cached, cache check needs to be bypassed. The following code snippet does just that - it returns an empty value instead of an actual termID:
+
+```js
+SharedPreferencesImpl.getString.overload('java.lang.String', 'java.lang.String').implementation = function (key, defValue) {
+    if (key === 'term_uuid_new') { return ''; }
+    return this.getString(key, defValue);
+};
+```
+
+Method `m181297c(Context context)` is the actual place where termID is being built:
+
+![TermID builder method](./images/7.png)
+
+Two strings are being concatenated together:
+
+1. `m181298d()`:
+    * Initializes the result string as "35".
+    * Takes 13 different fields (BOARD, BRAND, CPU_ABI, etc. - each as a String object) of build information about the Android device running Tapo application.
+    * Computes length of String object.
+    * Appends last digit (or only digit if String.length() < 10) to the result string.
+2. `m181295a(Context context)` takes Android ID from the device that runs Tapo application.
+3. Resulting string equals `m181298d() + m181295a(Context context)`.
+4. TermID equals hex-encoded and uppercased MD5 hash of the concatenated result string.
+
+
+`m181298d()` method in JADX:
+
+![Build information about the Android device](./images/8.png)
+
+`m181295a(Context context)` method in JADX:
+
+![Android ID](./images/9.png)
+
+A JSON log for building termID shows the following information:
+
+```json
+{
+  "header": 35,
+  "board": {
+    "name": "mt6768",
+    "length": 6,
+    "lastDigit": "6"
+  },
+  "brand": {
+    "name": "Redmi",
+    "length": 5,
+    "lastDigit": "5"
+  },
+  "cpu_api": {
+    "name": "arm64-v8a",
+    "length": 9,
+    "lastDigit": "9"
+  },
+  "device": {
+    "name": "merlinx",
+    "length": 7,
+    "lastDigit": "7"
+  },
+  "display": {
+    "name": "lineage_merlinx-userdebug 16 BP2A.250605.031.A2 eng.androi.20250916.075845 test-keys",
+    "length": 84,
+    "lastDigit": "4"
+  },
+  "host": {
+    "name": "r-cca484a1fca13862-f3pp",
+    "length": 23,
+    "lastDigit": "3"
+  },
+  "id": {
+    "name": "BP2A.250605.031.A2",
+    "length": 18,
+    "lastDigit": "8"
+  },
+  "manufacturer": {
+    "name": "Xiaomi",
+    "length": 6,
+    "lastDigit": "6"
+  },
+  "model": {
+    "name": "Redmi Note 9",
+    "length": 12,
+    "lastDigit": "2"
+  },
+  "product": {
+    "name": "lineage_merlinx",
+    "length": 15,
+    "lastDigit": "5"
+  },
+  "tags": {
+    "name": "release-keys",
+    "length": 12,
+    "lastDigit": "2"
+  },
+  "type": {
+    "name": "user",
+    "length": 4,
+    "lastDigit": "4"
+  },
+  "user": {
+    "name": "android-build",
+    "length": 13,
+    "lastDigit": "3"
+  },
+  "buildInfo": "356597438625243",
+  "androidId": "988583252ee0bd24",
+  "fullString": "356597438625243988583252ee0bd24",
+  "termID": "55362BA0604DB15DDEF62C41C6D57E46"
+}
+```
+
+# Python Implementation of HTTP Request Signature
+
+Python implementation of HTTP request signature building is available in this repository as [signature.py at sample_scripts directory](./sample_scripts/signature.py).
