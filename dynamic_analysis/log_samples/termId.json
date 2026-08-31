@@ -1,0 +1,72 @@
+{
+  "header": 35,
+  "board": {
+    "name": "mt6768",
+    "length": 6,
+    "lastDigit": "6"
+  },
+  "brand": {
+    "name": "Redmi",
+    "length": 5,
+    "lastDigit": "5"
+  },
+  "cpu_api": {
+    "name": "arm64-v8a",
+    "length": 9,
+    "lastDigit": "9"
+  },
+  "device": {
+    "name": "merlinx",
+    "length": 7,
+    "lastDigit": "7"
+  },
+  "display": {
+    "name": "lineage_merlinx-userdebug 16 BP2A.250605.031.A2 eng.androi.20250916.075845 test-keys",
+    "length": 84,
+    "lastDigit": "4"
+  },
+  "host": {
+    "name": "r-cca484a1fca13862-f3pp",
+    "length": 23,
+    "lastDigit": "3"
+  },
+  "id": {
+    "name": "BP2A.250605.031.A2",
+    "length": 18,
+    "lastDigit": "8"
+  },
+  "manufacturer": {
+    "name": "Xiaomi",
+    "length": 6,
+    "lastDigit": "6"
+  },
+  "model": {
+    "name": "Redmi Note 9",
+    "length": 12,
+    "lastDigit": "2"
+  },
+  "product": {
+    "name": "lineage_merlinx",
+    "length": 15,
+    "lastDigit": "5"
+  },
+  "tags": {
+    "name": "release-keys",
+    "length": 12,
+    "lastDigit": "2"
+  },
+  "type": {
+    "name": "user",
+    "length": 4,
+    "lastDigit": "4"
+  },
+  "user": {
+    "name": "android-build",
+    "length": 13,
+    "lastDigit": "3"
+  },
+  "buildInfo": "356597438625243",
+  "androidId": "988583252ee0bd24",
+  "fullString": "356597438625243988583252ee0bd24",
+  "termID": "55362BA0604DB15DDEF62C41C6D57E46"
+}

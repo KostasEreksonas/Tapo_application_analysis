@@ -1,0 +1,228 @@
+{
+  "threadId": "57818",
+  "accessKey": "4d11b6b9d5ea4d19a829adbb9714b057",
+  "secretKey": "6ed7d97f3e73467f8a5bab90b577ba4c",
+  "contentType": "application/json; charset=UTF-8",
+  "contentLength": "134",
+  "contentString": "{\"appPackageName\":\"com.tplink.iot\",\"appType\":\"TP-Link_Tapo_Android\",\"tcspVer\":\"1.1\",\"terminalUUID\":\"55362BA0604DB15DDEF62C41C6D57E46\"}",
+  "contentEncoded": "OipCDENZq7XgQ1RGH/EisA==",
+  "timestamp": "9999999999",
+  "nonce": "0a763949-e86c-453c-a90c-eadfcbfa3741",
+  "path": "/api/v2/common/helloCloud",
+  "signature": "15b8eebbbab9a9970c95254be04f8d1ca215c697",
+  "request": {
+    "method": "POST",
+    "url": "https://n-wap.i.tplinkcloud.com/api/v2/common/helloCloud?appName=TP-Link_Tapo_Android&appVer=3.20.154&netType=wifi&termID=55362BA0604DB15DDEF62C41C6D57E46&ospf=Android%2016&brand=TPLINK&locale=en_US&model=Redmi%20Note%209&termName=Xiaomi%20Redmi%20Note%209&termMeta=1",
+    "urlParameterNames": [
+      {
+        "name": "appName",
+        "value": "TP-Link_Tapo_Android"
+      },
+      {
+        "name": "appVer",
+        "value": "3.20.154"
+      },
+      {
+        "name": "netType",
+        "value": "wifi"
+      },
+      {
+        "name": "termID",
+        "value": "55362BA0604DB15DDEF62C41C6D57E46"
+      },
+      {
+        "name": "ospf",
+        "value": "Android 16"
+      },
+      {
+        "name": "brand",
+        "value": "TPLINK"
+      },
+      {
+        "name": "locale",
+        "value": "en_US"
+      },
+      {
+        "name": "model",
+        "value": "Redmi Note 9"
+      },
+      {
+        "name": "termName",
+        "value": "Xiaomi Redmi Note 9"
+      },
+      {
+        "name": "termMeta",
+        "value": "1"
+      }
+    ],
+    "headers": [
+      {
+        "name": "signature-required",
+        "value": "true"
+      },
+      {
+        "name": "Content-Type",
+        "value": "application/json;charset=UTF-8"
+      }
+    ],
+    "tags": "com.tplink.cloud.api.ProtocolV2Api.helloCloud() [com.tplink.cloud.bean.protocol.params.HelloCloudParams@20dbac0]"
+  },
+  "response": {
+    "protocol": "http/1.1",
+    "code": 200,
+    "message": "OK",
+    "body": "{\"error_code\":0,\"result\":{\"tcspStatus\":1}}"
+  }
+}
+{
+  "threadId": "57829",
+  "accessKey": "4d11b6b9d5ea4d19a829adbb9714b057",
+  "secretKey": "6ed7d97f3e73467f8a5bab90b577ba4c",
+  "contentType": "application/json; charset=UTF-8",
+  "contentLength": "33",
+  "contentString": "{\"serviceIds\":[\"cipc.api.cloud\"]}",
+  "contentEncoded": "F6ZG767UdbygPCZbHUvUFg==",
+  "timestamp": "9999999999",
+  "nonce": "9f9cdc7f-46b3-4609-8731-9e2afa322019",
+  "path": "/api/v2/common/getAppServiceUrl",
+  "signature": "3be3eb10e24580ec1d4a509a3ba403646839b95f",
+  "request": {
+    "method": "POST",
+    "url": "https://n-euw1-wap.i.tplinkcloud.com/api/v2/common/getAppServiceUrl?appName=TP-Link_Tapo_Android&appVer=3.20.154&netType=wifi&termID=55362BA0604DB15DDEF62C41C6D57E46&ospf=Android%2016&brand=TPLINK&locale=en_US&model=Redmi%20Note%209&termName=Xiaomi%20Redmi%20Note%209&termMeta=1",
+    "urlParameterNames": [
+      {
+        "name": "appName",
+        "value": "TP-Link_Tapo_Android"
+      },
+      {
+        "name": "appVer",
+        "value": "3.20.154"
+      },
+      {
+        "name": "netType",
+        "value": "wifi"
+      },
+      {
+        "name": "termID",
+        "value": "55362BA0604DB15DDEF62C41C6D57E46"
+      },
+      {
+        "name": "ospf",
+        "value": "Android 16"
+      },
+      {
+        "name": "brand",
+        "value": "TPLINK"
+      },
+      {
+        "name": "locale",
+        "value": "en_US"
+      },
+      {
+        "name": "model",
+        "value": "Redmi Note 9"
+      },
+      {
+        "name": "termName",
+        "value": "Xiaomi Redmi Note 9"
+      },
+      {
+        "name": "termMeta",
+        "value": "1"
+      }
+    ],
+    "headers": [
+      {
+        "name": "signature-required",
+        "value": "true"
+      },
+      {
+        "name": "Content-Type",
+        "value": "application/json;charset=UTF-8"
+      }
+    ],
+    "tags": "com.tplink.cloud.api.WebServiceV2Api.getAppServiceUrl() [https://n-euw1-wap.i.tplinkcloud.com, com.tplink.cloud.bean.webservice.params.AppServiceUrlParams@f79f14e]"
+  },
+  "response": {
+    "protocol": "http/1.1",
+    "code": 200,
+    "message": "OK",
+    "body": "{\"error_code\":-20104,\"msg\":\"Parameter doesn't exist\"}"
+  }
+}
+{
+  "threadId": "57820",
+  "accessKey": "4d11b6b9d5ea4d19a829adbb9714b057",
+  "secretKey": "6ed7d97f3e73467f8a5bab90b577ba4c",
+  "contentType": "application/json; charset=UTF-8",
+  "contentLength": "134",
+  "contentString": "{\"appPackageName\":\"com.tplink.iot\",\"appType\":\"TP-Link_Tapo_Android\",\"tcspVer\":\"1.1\",\"terminalUUID\":\"55362BA0604DB15DDEF62C41C6D57E46\"}",
+  "contentEncoded": "OipCDENZq7XgQ1RGH/EisA==",
+  "timestamp": "9999999999",
+  "nonce": "c76f5bda-f745-4390-99e6-3fdc0aab891a",
+  "path": "/api/v2/common/helloCloud",
+  "signature": "bd61941929ac354d19d4f3a8fe0b3445dddb3d9b",
+  "request": {
+    "method": "POST",
+    "url": "https://n-wap.i.tplinkcloud.com/api/v2/common/helloCloud?appName=TP-Link_Tapo_Android&appVer=3.20.154&netType=wifi&termID=55362BA0604DB15DDEF62C41C6D57E46&ospf=Android%2016&brand=TPLINK&locale=en_US&model=Redmi%20Note%209&termName=Xiaomi%20Redmi%20Note%209&termMeta=1",
+    "urlParameterNames": [
+      {
+        "name": "appName",
+        "value": "TP-Link_Tapo_Android"
+      },
+      {
+        "name": "appVer",
+        "value": "3.20.154"
+      },
+      {
+        "name": "netType",
+        "value": "wifi"
+      },
+      {
+        "name": "termID",
+        "value": "55362BA0604DB15DDEF62C41C6D57E46"
+      },
+      {
+        "name": "ospf",
+        "value": "Android 16"
+      },
+      {
+        "name": "brand",
+        "value": "TPLINK"
+      },
+      {
+        "name": "locale",
+        "value": "en_US"
+      },
+      {
+        "name": "model",
+        "value": "Redmi Note 9"
+      },
+      {
+        "name": "termName",
+        "value": "Xiaomi Redmi Note 9"
+      },
+      {
+        "name": "termMeta",
+        "value": "1"
+      }
+    ],
+    "headers": [
+      {
+        "name": "signature-required",
+        "value": "true"
+      },
+      {
+        "name": "Content-Type",
+        "value": "application/json;charset=UTF-8"
+      }
+    ],
+    "tags": "com.tplink.cloud.api.ProtocolV2Api.helloCloud() [com.tplink.cloud.bean.protocol.params.HelloCloudParams@20dbac0]"
+  },
+  "response": {
+    "protocol": "http/1.1",
+    "code": 200,
+    "message": "OK",
+    "body": "{\"error_code\":0,\"result\":{\"tcspStatus\":1}}"
+  }
+}
