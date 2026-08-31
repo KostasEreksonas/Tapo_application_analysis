@@ -347,7 +347,7 @@ Two strings are being concatenated together:
 
 ![Android ID](./images/9.png)
 
-A JSON log for building termID shows the following information:
+The aforementioned custom Frida hook produces a JSON lot that captures termID building process:
 
 ```json
 {
