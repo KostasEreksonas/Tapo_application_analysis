@@ -329,7 +329,7 @@ Method `m181297c(Context context)` is the actual place where termID is being bui
 
 Two strings are being concatenated together:
 
-1. `m181298d()`:
+1. `m181298d()` method:
     * Initializes the result string as "35".
     * Takes 13 different fields (BOARD, BRAND, CPU_ABI, etc. - each as a String object) of build information about the Android device running Tapo application.
     * Computes length of String object.
