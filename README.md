@@ -14,7 +14,7 @@ Table of Contents
     * [Frida Hook for Intercepting HTTP Request Signatures](#frida-hook-for-intercepting-http-request-signatures)
 * [TermID Algorithm](#termid-algorithm)
 * [Impact](#impact)
-* [Python Implementation of HTTP Request Signature](#python-implementation-of-http-request-signature)
+* [Python Implementations](#python-implementations)
 
 # Prerequisites
 
@@ -453,6 +453,6 @@ Note #2 implies that if a malicious actor manages to bypass TP-Link's certificat
 
 In the end, the Hmac-SHA1 signature acts as a HTTP request integrity layer and termID is essentially a fingerprint of a device that issued the request. Sensitive information access protection relies on TLS, certificate pinning and the server-issued session token, none of which were bypassed in this research.
 
-# Python Implementation of HTTP Request Signature
+# Python Implementations
 
-Python implementation of HTTP request signature building is available in this repository as [signature.py at sample_scripts directory](./sample_scripts/signature.py).
+Python implementation of HTTP request signature building algorithm and termID derivation are available in [sample_scripts directory](./sample_scripts/).
