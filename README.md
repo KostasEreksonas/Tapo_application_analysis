@@ -13,6 +13,7 @@ Table of Contents
 * [Dynamic Analysis of Signature Algorithm](#dynamic-analysis-of-signature-algorithm)
     * [Frida Hook for Intercepting HTTP Request Signatures](#frida-hook-for-intercepting-http-request-signatures)
 * [TermID Algorithm](#termid-algorithm)
+* [Impact](#impact)
 * [Python Implementation of HTTP Request Signature](#python-implementation-of-http-request-signature)
 
 # Prerequisites
@@ -423,6 +424,30 @@ The aforementioned custom Frida hook produces a JSON lot that captures termID bu
   "termID": "55362BA0604DB15DDEF62C41C6D57E46"
 }
 ```
+
+# Impact
+
+Being able to generate termID and HTTP request signature independently allows anyone to craft a valid HTTP request to the TP-Link's API.
+
+However, upon a successful login request, the API returns a server-generated authorization token (which is uniquely generated for each user and each new session), which has to be supplied as an additional URL parameter when requesting sensitive personal information, for example:
+1. Account details.
+2. Personal devices paired with the account:
+    * Video stream / recordings.
+    * Notifications.
+    * Configurations.
+    * Updates.
+
+Without authorized access, it is still possible to probe things like:
+1. Probe status of a TP-Link cloud server.
+2. Regional TP-Link cloud endpoint to use.
+
+The authorization token is being sent over a network session that is protected by TLSv1.3 and TP-Link SSL certificates pinned onto the Tapo application.
+
+A couple of things to note:
+1. ***For unauthorized requests:*** independently generating termID and HTTP request signature allows to craft valid HTTP requests for TP-Link API.
+2. ***For authorized requests:*** `token=<unique-token>` needs to be added as an URL parameter. Otherwise, this HTTP request is identical to an unauthenticated request.
+
+Note #2 implies that if a malicious actor manages to bypass TP-Link's certificate pinning and intercept the user login request (along with a response containing authentication token for that specific session), a ***completely valid and authorized*** HTTP request can be made to obtain the user's personal data.
 
 # Python Implementation of HTTP Request Signature
 
