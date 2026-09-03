@@ -10,7 +10,7 @@
     "length": 5,
     "lastDigit": "5"
   },
-  "cpu_api": {
+  "cpu_abi": {
     "name": "arm64-v8a",
     "length": 9,
     "lastDigit": "9"

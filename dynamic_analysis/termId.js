@@ -34,7 +34,7 @@ Java.perform(function () {
         const keys = [
             "board",
             "brand",
-            "cpu_api",
+            "cpu_abi",
             "device",
             "display",
             "host",
