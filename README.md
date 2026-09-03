@@ -28,6 +28,8 @@ Tools that were used (JADX for static code analysis and Frida for dynamic analys
 
 # Initial Analysis
 
+Relevant network traffic was collected with Wireshark and TP-Link's SSL pinning was bypassed while leveraging Frida's instrumentation toolkit and [masbog's Android SSL Re-Pinning script](https://codeshare.frida.re/@masbog/frida-android-unpinning-ssl/), hooked onto Tapo v3.19.607. This allowed to enumerate TP-Link API endpoints, payloads, URL and it's parameters, as well as how signature and termID is being incorporated into the HTTP request. Also, a login request was captured with a response to it containing authorization token for sensitive information access - more about that [on Impact section](#impact).
+
 For analyzing the application (and cryptography research in general), I created a Javascript Frida hook - [which can be found by following this link to the project's Github repository](https://github.com/KostasEreksonas/android_analysis/blob/main/hooks/crypto_discovery.js) - that overloads multiple methods in Base64, Cipher and Mac Java classes, logging relevant cryptographic data and payload preview (both plaintext and encrypted/encoded) in a JSON format. Overloaded methods include:
 
 1. Cipher:
@@ -427,7 +429,7 @@ The aforementioned custom Frida hook produces a JSON lot that captures termID bu
 
 # Impact
 
-Being able to generate termID and HTTP request signature independently allows anyone to craft a valid HTTP request to the TP-Link's API.
+Being able to generate termID and HTTP request signature independently allows anyone who extracts hardcoded keys from Tapo application to craft a valid HTTP request to the TP-Link's API. Also, the hardcoded keys seem to persist between Tapo versions ([v3.7.113 was used in ad1s0n's article]() and both v3.19.607 for signature algorithm analysis and v3.20.154 for termID derivation were used in this repo).
 
 However, upon a successful login request, the API returns a server-generated authorization token (which is uniquely generated for each user and each new session), which has to be supplied as an additional URL parameter when requesting sensitive personal information, for example:
 1. Account details.
@@ -448,6 +450,8 @@ A couple of things to note:
 2. ***For authorized requests:*** `token=<unique-token>` needs to be added as an URL parameter. Otherwise, this HTTP request is identical to an unauthenticated request.
 
 Note #2 implies that if a malicious actor manages to bypass TP-Link's certificate pinning and intercept the user login request (along with a response containing authentication token for that specific session), a ***completely valid and authorized*** HTTP request can be made to obtain the user's personal data.
+
+In the end, the Hmac-SHA1 signature acts as a HTTP request integrity layer and termID is essentially a fingerprint of a device that issued the request. Sensitive information access protection relies on TLS, certificate pinning and the server-issued session token, none of which were bypassed in this research.
 
 # Python Implementation of HTTP Request Signature
 
