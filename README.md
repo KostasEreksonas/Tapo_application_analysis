@@ -28,7 +28,7 @@ Tools that were used (JADX for static code analysis and Frida for dynamic analys
 
 # Initial Analysis
 
-Relevant network traffic was collected with Wireshark and TP-Link's SSL pinning was bypassed while leveraging Frida's instrumentation toolkit and [masbog's Android SSL Re-Pinning script](https://codeshare.frida.re/@masbog/frida-android-unpinning-ssl/), hooked onto Tapo v3.19.607. This allowed to enumerate TP-Link API endpoints, payloads, URL and it's parameters, as well as how signature and termID is being incorporated into the HTTP request. Also, a login request was captured with a response to it containing authorization token for sensitive information access - more about that [on Impact section](#impact).
+Relevant network traffic was collected with Wireshark and TP-Link's SSL pinning was bypassed while leveraging Frida's instrumentation toolkit and [masbog's Android SSL Re-Pinning script](https://codeshare.frida.re/@masbog/frida-android-unpinning-ssl/), hooked onto Tapo v3.19.607. This allowed to enumerate TP-Link API endpoints, payloads, URL and its parameters, as well as how signature and termID is being incorporated into the HTTP request. Also, a login request was captured with a response to it containing authorization token for sensitive information access - more about that [on Impact section](#impact).
 
 For analyzing the application (and cryptography research in general), I created a Javascript Frida hook - [which can be found by following this link to the project's Github repository](https://github.com/KostasEreksonas/android_analysis/blob/main/hooks/crypto_discovery.js) - that overloads multiple methods in Base64, Cipher and Mac Java classes, logging relevant cryptographic data and payload preview (both plaintext and encrypted/encoded) in a JSON format. Overloaded methods include:
 
@@ -117,13 +117,13 @@ For static analysis, the targeted application needs to be pulled the Android dev
 
 1. Load `base.apk` into JADX.
 
-2. Search for the hardcoded HMAC key:
+2. Search for the hardcoded secret key:
 
-![Hardcoded HMAC key](./images/1.png)
+![Hardcoded secret key](./images/1.png)
 
-3. Full function with the hardcoded HMAC key:
+3. Full function with the hardcoded secret key:
 
-![Full function with the hardcoded HMAC key](./images/2.png)
+![Full function with the hardcoded secret key](./images/2.png)
 
 4. Search for `m235933h()` function and select `addInterceptor`:
 
@@ -137,6 +137,10 @@ One additional thing to note is that `C63377r(String str, String str2)` takes 2 
 
 1. First argument is ***access key*** - separate hardcoded value, used as a part of X-Authorization header in a HTTP request (example of which is provided in a [Signature Algorithm](#signature-algorithm) section).
 2. Second argument is ***secret key*** - already described in [initial analysis](#initial-analysis) section, used as a key for HTTP request signature derivation.
+
+Jadx-renamed class `m235931g()` returns the access key:
+
+![Access key, as depicted in JADX](./images/5.png)
 
 ***Note:*** Short class and method identifiers - ids (e.g. l7.r) that JADX renames from - are obfuscated representations of real class/method names and change with every application version. For this analysis, version 3.19.607 of TP-Link Tapo application was used.
 
@@ -152,7 +156,7 @@ One additional thing to note is that `C63377r(String str, String str2)` takes 2 
 
 On a high level, the signature derivation scheme can look as follows:
 
-![Signature derivation scheme](./images/5.png)
+![Signature derivation scheme](./images/6.png)
 
 For example, if the following HTTP request is captured:
 
@@ -315,7 +319,7 @@ Full Javascript code that logs the process of building a termID [can be accessed
 
 In JADX-decompiled code, `AbstractC50389m.m181296b()` is the method that computes and returns `termID`:
 
-![Method that build termID, as shown in code decompiled by JADX](./images/6.png)
+![Method that build termID, as shown in code decompiled by JADX](./images/7.png)
 
 As the first thing, this method queries `SharedPreferences["term_uuid_pref"]["term_uuid_new"]` for a cached termID value. If a cached value is found, method returns it ***without*** falling back to generation logic. Since the test device already has a termID cached, cache check needs to be bypassed. The following code snippet does just that - it returns an empty value instead of an actual termID:
 
@@ -328,7 +332,7 @@ SharedPreferencesImpl.getString.overload('java.lang.String', 'java.lang.String')
 
 Method `m181297c(Context context)` is the actual place where termID is being built:
 
-![TermID builder method](./images/7.png)
+![TermID builder method](./images/8.png)
 
 Two strings are being concatenated together:
 
@@ -344,11 +348,11 @@ Two strings are being concatenated together:
 
 `m181298d()` method in JADX:
 
-![Build information about the Android device](./images/8.png)
+![Build information about the Android device](./images/9.png)
 
 `m181295a(Context context)` method in JADX:
 
-![Android ID](./images/9.png)
+![Android ID](./images/10.png)
 
 The aforementioned custom Frida hook produces a JSON lot that captures termID building process:
 
@@ -429,31 +433,20 @@ The aforementioned custom Frida hook produces a JSON lot that captures termID bu
 
 # Impact
 
-Being able to generate termID and HTTP request signature independently allows anyone who extracts hardcoded keys from Tapo application to craft a valid HTTP request to the TP-Link's API. Also, the hardcoded keys seem to persist between Tapo versions ([v3.7.113 was used in ad1s0n's article]() and both v3.19.607 for signature algorithm analysis and v3.20.154 for termID derivation were used in this repo).
+Main takeaway of the research can be this: the API can be driven fully outside the official application, given the following pieces of information:
 
-However, upon a successful login request, the API returns a server-generated authorization token (which is uniquely generated for each user and each new session), which has to be supplied as an additional URL parameter when requesting sensitive personal information, for example:
-1. Account details.
-2. Personal devices paired with the account:
-    * Video stream / recordings.
-    * Notifications.
-    * Configurations.
-    * Updates.
+1. Access Key
+2. Secret Key (both hardcoded into Tapo Android application, persistent between versions - ([v3.7.113, used in ad1s0n's article](https://dev.to/ad1s0n/reverse-engineering-tp-link-tapos-rest-api-part-1-4g6), v3.19.607 used by me for signature algorithm analysis and v3.20.154 for termID derivation)).
+3. Reverse engineered and reimplemented methods for:
+    * termID generation from Android build data.
+    * HTTP request signature derivation.
+4. TP-link cloud account details:
+    * Username.
+    * Password.
 
-Without authorized access, it is still possible to probe things like:
-1. Probe status of a TP-Link cloud server.
-2. Regional TP-Link cloud endpoint to use.
+A proof-of-concept (PoC) for a custom API driver [can be found in sample_scripts directory](./sample_scripts/poc.py). It retrieves a fresh access token for the credentials provided and issues a valid HTTP POST request to `/api/v2/account/getAccountInfo` API endpoint, response to which includes data like account ID, registration time and email address (redacted JSON data of the response can be viewed [here](./sample_scripts/sample.json)).
 
-The authorization token is being sent over a network session that is protected by TLSv1.3 and TP-Link SSL certificates pinned onto the Tapo application.
-
-A couple of things to note:
-1. ***For unauthorized requests:*** independently generating termID and HTTP request signature allows to craft valid HTTP requests for TP-Link API.
-2. ***For authorized requests:*** `token=<unique-token>` needs to be added as an URL parameter. Otherwise, this HTTP request is identical to an unauthenticated request.
-
-Note #2 implies that if a malicious actor manages to bypass TP-Link's certificate pinning and intercept the user login request (along with a response containing authentication token for that specific session), a ***completely valid and authorized*** HTTP request can be made to obtain the user's personal data.
-
-In the end, the Hmac-SHA1 signature acts as a HTTP request integrity layer and termID is essentially a fingerprint of a device that issued the request. Sensitive information access protection relies on TLS, certificate pinning and the server-issued session token, none of which were bypassed in this research.
-
-On the last note, [the replay script in sample_scripts directory](./sample_scripts/replay.py) retrieves a fresh access token for the provided TP-Link account credentials and demonstrates that the account's username and password is the only two pieces of information necessary to craft valid and authenticated HTTP requests to TP-Link API endpoints. However, it is important to emphasize that this sensitive data travels over a network via TLSv1.3 session and is further protected by TP-Link's SSL/TLS certificates pinned into it's Android application. 
+It is important to emphasize again that the session forgery script requires a valid pair TP-Link cloud credentials (username + password). When this data travels over a network (e.g. a login request), the data is wrapped into a TLSv1.3 session and is further protected by SSL/TLS certificates pinned into TP-Link Tapo Android application.
 
 # Python Implementations
 
