@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import json
 import hmac
 import base64
@@ -7,27 +8,41 @@ import requests
 import urllib.parse
 
 from hashlib import md5, sha1
+from dotenv import load_dotenv
 
+load_dotenv()
+
+# Load environment variables
+TAPO_BUILD_ANDROID_ID = os.environ["TAPO_BUILD_ANDROID_ID"]
+TAPO_SECRET_KEY = os.environ["TAPO_SECRET_KEY"]
+TAPO_ACCESS_KEY = os.environ["TAPO_ACCESS_KEY"]
+TAPO_CLOUD_USERNAME = os.environ["TAPO_CLOUD_USERNAME"]
+TAPO_CLOUD_PASSWORD = os.environ["TAPO_CLOUD_PASSWORD"]
+
+# Disable warnings from requests library
 requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
 
 parameters = {
     "host": "n-euw1-wap.i.tplinkcloud.com",
-    "payload": "{\"serviceIds\":[\"cipc.api.cloud\"]}",
+    "payload": {
+        "cloudUserName": TAPO_CLOUD_USERNAME,
+        "supportBindAccount": "false"
+    },
     "timestamp": "9999999999",
     "nonce": "2fc24cfb-49e4-49a4-a634-27d905c565f9",
-    "path": "/api/v2/common/getAppServiceUrl",
+    "path": "/api/v2/account/getAccountInfo",
     "urlParams": {
         "appName": "TP-Link_Tapo_Android",
-        "appVer": "3.20.154",
+        "appVer": "3.19.607",
         "netType": "wifi",
-        "termId": "",
+        "termID": "",
         "ospf": "Android 16",
         "brand": "TPLINK",
         "locale": "en_US",
         "model": "Redmi Note 9",
         "termName": "Xiaomi Redmi Note 9",
         "termMeta": "1",
-        "token": "<user-token-goes-here>"
+        "token": ""
     },
     "buildHeader": "35",
     "buildInfo": {
@@ -45,13 +60,44 @@ parameters = {
         "type": "user",
         "user": "android-build"
     },
-    "buildAndroidId": "<Android-device-ID-goes-here>",
-    "secretKey": "<secret-key-goes-here>",
-    "accessKey": "<access-key-goes-here>"
+    "buildAndroidId": f"{os.environ['TAPO_BUILD_ANDROID_ID']}",
+    "secretKey": f"{os.environ['TAPO_SECRET_KEY']}",
+    "accessKey": f"{os.environ['TAPO_ACCESS_KEY']}"
 }
 
+def getToken():
+    """
+    Generate TP-Link access token
+    Originally described by Art Chaidarun: https://chaidarun.com/tp-link-api
+    """
+    termId = parameters["urlParams"]["termID"]
+
+    url = "https://wap.tplinkcloud.com"
+
+    headers = {
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "method": "login",
+        "params": {
+            "appType": "TP-Link_Tapo_Android",
+            "cloudUserName": f"{os.environ['TAPO_CLOUD_USERNAME']}",
+            "cloudPassword": f"{os.environ['TAPO_CLOUD_PASSWORD']}",
+            "terminalUUID": termId
+        }
+    }
+
+    payload = json.dumps(payload)
+    payload = json.loads(payload)
+
+    response = requests.post(url, headers=headers, json=payload, verify=False)
+    response_json = json.loads(response.content)
+    
+    return response_json["result"]["token"]
+
 def encodePayload():
-    payload = parameters["payload"].encode(encoding = 'UTF-8', errors = 'strict')
+    payload = json.dumps(parameters["payload"]).encode(encoding = 'UTF-8', errors = 'strict')
     bodyMD5 = md5(payload).digest()
     bodyBase64 = base64.b64encode(bodyMD5).decode('UTF-8')
 
@@ -83,12 +129,17 @@ def computeTermId():
 
 def buildUrl():
     """Build a valid URL (that is URL-encoded) for TP-Link API request"""
-    parameters["urlParams"]["termId"] = computeTermId()
+    # Update empty parameters with generated data
+    parameters["urlParams"]["termID"] = computeTermId()
+    parameters["urlParams"]["token"] = getToken()
+
     host = parameters["host"]
     path = parameters["path"]
     params = urllib.parse.urlencode(parameters["urlParams"])
 
-    return f"https://{host}{path}?{params}"
+    url = f"https://{host}{path}?{params}"
+
+    return url
 
 def createRequest():
     """Craft HTTP request to TP-Link API"""
@@ -98,7 +149,7 @@ def createRequest():
     timestamp = parameters["timestamp"]
     nonce = parameters["nonce"]
     accessKey = parameters["accessKey"]
-    payload = parameters["payload"]
+    payload = json.dumps(parameters["payload"])
     host = parameters["host"]
     url = buildUrl()
 
@@ -115,11 +166,11 @@ def createRequest():
 
     response = requests.post(url, headers=headers, data=payload, verify=False)
 
-    return headers, response.content
+    return url, headers, response.content
 
-def dumpReplayData(payload, headers, response):
+def dumpReplayData(url, payload, headers, response):
     """Dump replay data in JSON format"""
-    url = buildUrl()
+    payload = json.dumps(payload)
 
     replay_data = {
         "url": url,
@@ -133,12 +184,12 @@ def dumpReplayData(payload, headers, response):
         print("Replay data written to replay_data.json")
 
 def main():
-    headers, response = createRequest()
+    url, headers, response = createRequest()
 
     try:
-        dumpReplayData(parameters["payload"], headers, response)
-    except:
-        print("Error formatting JSON") 
+        dumpReplayData(url, parameters["payload"], headers, response)
+    except TypeError as e:
+        print(f"Error formatting JSON: {e}")
 
 if __name__ == "__main__":
     main()
