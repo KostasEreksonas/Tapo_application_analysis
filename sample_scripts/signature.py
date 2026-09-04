@@ -31,10 +31,8 @@ def computeSignature(encodedPayload, timestamp, nonce, path):
 def main():
     payload, timestamp, nonce, path = inputArguments()
     encodedPayload = encodePayload(payload)
-    print(f"Input Parameters:\n\tPayload: {payload}\n\tEncoded Payload: {encodedPayload}\n\tTimestamp: {timestamp}\n\tNonce: {nonce}\n\tPath: {path}")
-
     signature = computeSignature(encodedPayload, timestamp, nonce, path)
-    print(f"Signature: {signature}")
+    print(f"Input Parameters:\n\tPayload: {payload}\n\tEncoded Payload: {encodedPayload}\n\tTimestamp: {timestamp}\n\tNonce: {nonce}\n\tPath: {path}\n\tSignature: {signature}")
 
 if __name__ == "__main__":
     main()
