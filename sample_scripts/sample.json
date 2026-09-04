@@ -1,0 +1,31 @@
+{
+    "url": "<url>",
+    "payload": {
+        "cloudUserName": "<cloud-username>",
+        "supportBindAccount": "false"
+    },
+    "headers": {
+        "Content-MD5": "UUyPr3UOdCP7LbNVLk7I2w==",
+        "X-Authorization": "Timestamp=<hardcoded-timestamp>, Nonce=<nonce>, AccessKey=<access-key>, Signature=<signature>",
+        "Content-Type": "application/json;charset=UTF-8",
+        "Content-Length": "<content-length>",
+        "Host": "n-euw1-wap.i.tplinkcloud.com",
+        "Connection": "Keep-Alive",
+        "Accept-Encoding": "gzip",
+        "User-Agent": "okhttp/4.11.0"
+    },
+    "response": {
+        "error_code": 0,
+        "result": {
+            "isDoiCountry": true,
+            "accountId": "<account-id>",
+            "regTime": "<account-registration-time>",
+            "countryCode": "LT",
+            "riskDetected": 0,
+            "nickname": "<nickname>",
+            "thirdPartyAccountInfoList": [],
+            "email": "<email>",
+            "thirdPartyDeviceToken": {}
+        }
+    }
+}
