@@ -453,6 +453,11 @@ Note #2 implies that if a malicious actor manages to bypass TP-Link's certificat
 
 In the end, the Hmac-SHA1 signature acts as a HTTP request integrity layer and termID is essentially a fingerprint of a device that issued the request. Sensitive information access protection relies on TLS, certificate pinning and the server-issued session token, none of which were bypassed in this research.
 
+On the last note, [the replay script in sample_scripts directory](./sample_scripts/replay.py) retrieves a fresh access token for the provided TP-Link account credentials and demonstrates that the account's username and password is the only two pieces of information necessary to craft valid and authenticated HTTP requests to TP-Link API endpoints. However, it is important to emphasize that this sensitive data travels over a network via TLSv1.3 session and is further protected by TP-Link's SSL/TLS certificates pinned into it's Android application. 
+
 # Python Implementations
 
-Python implementation of HTTP request signature building algorithm and termID derivation are available in [sample_scripts directory](./sample_scripts/).
+Python implementation of HTTP request signature building algorithm, termID derivation and HTTP request replay to TP-Link API are available in [The sample_scripts directory](./sample_scripts/) includes Python scripts for:
+1. HTTP request signature computation.
+2. TermID derivation.
+3. Replaying HTTP POST requests to TP-Link API.
