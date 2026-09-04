@@ -1,1 +1,1 @@
-Replay script can be run with: `uv run replay.py`
+Proof-of-concept script can be run with: `uv run poc.py`
